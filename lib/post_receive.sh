@@ -1,26 +1,36 @@
 post_receive () {
+	xml_file=`tmp_file`
 	while read old_rev new_rev refname
 	do
-		xml_file=`tmp_file`
-		log_to_xml "$new_rev" > $xml_file
-		curl_to_tracker $xml_file
-		rm $xml_file
+		post_git_line_to_tracker $new_rev $xml_file || return 1
 	done
+	rm $xml_file
+}
+
+post_git_line_to_tracker () {
+	if [ -z "$TRACKER_TOKEN" ]
+	then
+		echo "You are missing a tracker token"
+		return 1
+	fi
+	log_to_xml "$1" > $2
+	curl_to_tracker $2
 }
 
 tmp_file () {
 	date "+/tmp/$$.%s"
 }
+
 git_log_message () {
 	git log -1 --format="%B" $1
 }
 
 git_log_author () {
-	git log -1 --format="%an " $1
+	git log -1 --format="%an" $1
 }
 
 git_log_url () {
-	echo "http://atlas.mobileiron.com/fisheye/changelog/polaris?cs=$1"
+	echo $REPOS_URL | sed -e "s|@@REVISION@@|$1|"
 }
 
 log_to_xml () {
