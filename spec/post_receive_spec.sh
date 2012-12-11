@@ -11,5 +11,5 @@ it_reads_each_row_from_standard_input () {
 
 it_posts_to_tracker () {
 	local tracker_ref
-	echo "old" "new" "name" | post_receive | grep -q "old/new/name"
+	echo "empty" "8627db4" "refs/heads/master" | post_receive
 }
