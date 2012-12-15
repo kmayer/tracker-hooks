@@ -4,33 +4,41 @@ module post_receive
 
 describe "post_receive"
 
-before (){
+before ()
+{
 	REPOS_URL="http://repos.example.com/commit/@@REVISION@@"
 	TRACKER_TOKEN="let-me-in-tracker"
 }
 
-it_posts_to_tracker () {
-	local CURL_WAS_CALLED
+it_posts_to_tracker ()
+{
+	local curl_was_called
 	curl () {
-		CURL_WAS_CALLED=$$
+		curl_was_called=$2
 	}
 
 	git () {
 		echo "$@"
 	}
 
-	post_git_line_to_tracker "new-rev" "/tmp/some-tempfile"
+	git_revisions () {
+		echo $2
+	}
 
-	test "$CURL_WAS_CALLED" = $$
+	post_git_line_to_tracker "old-rev" "new-rev" "/tmp/some-tempfile"
+
+	test "$curl_was_called" = "X-Git-Revision: new-rev"
 }
 
-it_formats_the_repository_url () {
+it_formats_the_repository_url ()
+{
 	url=`git_log_url sha`
 
 	test "$url" = "http://repos.example.com/commit/sha"
 }
 
-it_returns_empty_string () {
+it_returns_empty_string_for_url ()
+{
 	unset REPOS_URL
 
 	url=`git_log_url sha`
@@ -38,7 +46,8 @@ it_returns_empty_string () {
 	test -z "$url"
 }
 
-it_formats_the_xml () {
+it_formats_the_xml ()
+{
 	git_log_message () {
 		echo "message"
 	}
@@ -57,11 +66,12 @@ it_formats_the_xml () {
 </source_commit>'
 }
 
-it_requires_the_tracker_api_token () {
+it_requires_the_tracker_api_token ()
+{
 	unset TRACKER_TOKEN
-	local CURL_WAS_CALLED
+	local curl_was_called
 	curl () {
-		CURL_WAS_CALLED=$$
+		curl_was_called=$$
 	}
 
 	git () {
@@ -70,5 +80,27 @@ it_requires_the_tracker_api_token () {
 
 	post_git_line_to_tracker "new-rev" "/tmp/some-tempfile" || :
 
-	test "$CURL_WAS_CALLED" = ""
+	test -z "$curl_was_called"
+}
+
+it_returns_the_revision_list ()
+{
+	git_rev_list() {
+		test "$1" = "old-rev..new-rev"
+	}
+	git_rev_parse() {
+		echo "$1"
+	}
+	git_revisions "old-rev" "new-rev"
+}
+
+it_returns_the_revision_list_for_new_repos ()
+{
+	git_rev_list () {
+		test "$1" = "new-rev"
+	}
+	git_rev_parse () {
+		echo "$1"
+	}
+	git_revisions "00000" "new-rev"
 }
