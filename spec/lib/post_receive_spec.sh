@@ -12,6 +12,8 @@ before ()
 
 it_posts_to_tracker ()
 {
+	trap "rm -f /tmp/some-tempfile" EXIT
+	
 	local curl_was_called
 	curl () {
 		curl_was_called=$2
@@ -26,12 +28,14 @@ it_posts_to_tracker ()
 	}
 
 	post_git_line_to_tracker "old-rev" "new-rev" "/tmp/some-tempfile"
-
+	
 	test "$curl_was_called" = "X-Git-Revision: new-rev"
 }
 
 it_requires_the_tracker_api_token ()
 {
+	trap "rm -f /tmp/some-tempfile" EXIT
+
 	unset TRACKER_TOKEN
 	local curl_was_called
 	curl () {
@@ -86,7 +90,8 @@ it_log_to_xml_formats_the_xml ()
 it_git_revisions_returns_the_revision_list ()
 {
 	git_rev_list() {
-		test "$1" = "old-rev..new-rev"
+		test "$1" = "--reverse"
+		test "$2" = "old-rev..new-rev"
 	}
 	git_rev_parse() {
 		echo "$1"
@@ -97,7 +102,8 @@ it_git_revisions_returns_the_revision_list ()
 it_git_revisions_returns_the_revision_list_for_new_repos ()
 {
 	git_rev_list () {
-		test "$1" = "new-rev"
+		test "$1" = "--reverse"
+		test "$2" = "new-rev"
 	}
 	git_rev_parse () {
 		echo "$1"

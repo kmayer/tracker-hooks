@@ -63,7 +63,7 @@ SH
 
 curl_to_tracker ()
 {
-	curl -H "X-Git-Revision: $2" -X POST -H "X-TrackerToken: $TRACKER_TOKEN" -H "Content-type: application/xml" -d @$1 http://www.pivotaltracker.com/services/v3/source_commits
+	curl -H "X-Git-Revision: $2" -s -X POST -H "X-TrackerToken: $TRACKER_TOKEN" -H "Content-type: application/xml" -d @$1 "http://www.pivotaltracker.com/services/v3/source_commits" > /dev/null
 }
 
 git_revisions () {
@@ -72,15 +72,15 @@ git_revisions () {
 
 	if expr "$oldrev" : '0*$' >/dev/null
 	then
-		git_rev_list "${newrev}"
+		git_rev_list --reverse "${newrev}"
 	else
-		git_rev_list "${oldrev}..${newrev}"
+		git_rev_list --reverse "${oldrev}..${newrev}"
 	fi
 }
 
 git_rev_list()
 {
-	git rev-list "$1"
+	git rev-list "$@"
 }
 
 git_rev_parse ()
