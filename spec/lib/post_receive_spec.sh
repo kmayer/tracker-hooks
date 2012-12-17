@@ -30,14 +30,31 @@ it_posts_to_tracker ()
 	test "$curl_was_called" = "X-Git-Revision: new-rev"
 }
 
-it_formats_the_repository_url ()
+it_requires_the_tracker_api_token ()
+{
+	unset TRACKER_TOKEN
+	local curl_was_called
+	curl () {
+		curl_was_called=$$
+	}
+
+	git () {
+		exit -127 # should not happen
+	}
+
+	post_git_line_to_tracker "new-rev" "/tmp/some-tempfile" || :
+
+	test -z "$curl_was_called"
+}
+
+it_git_log_url_formats_the_repository_url ()
 {
 	url=`git_log_url sha`
 
 	test "$url" = "http://repos.example.com/commit/sha"
 }
 
-it_returns_empty_string_for_url ()
+it_git_log_url_returns_empty_string_for_url ()
 {
 	unset REPOS_URL
 
@@ -46,7 +63,7 @@ it_returns_empty_string_for_url ()
 	test -z "$url"
 }
 
-it_formats_the_xml ()
+it_log_to_xml_formats_the_xml ()
 {
 	git_log_message () {
 		echo "message"
@@ -66,24 +83,7 @@ it_formats_the_xml ()
 </source_commit>'
 }
 
-it_requires_the_tracker_api_token ()
-{
-	unset TRACKER_TOKEN
-	local curl_was_called
-	curl () {
-		curl_was_called=$$
-	}
-
-	git () {
-		exit -127 # should not happen
-	}
-
-	post_git_line_to_tracker "new-rev" "/tmp/some-tempfile" || :
-
-	test -z "$curl_was_called"
-}
-
-it_returns_the_revision_list ()
+it_git_revisions_returns_the_revision_list ()
 {
 	git_rev_list() {
 		test "$1" = "old-rev..new-rev"
@@ -94,7 +94,7 @@ it_returns_the_revision_list ()
 	git_revisions "old-rev" "new-rev"
 }
 
-it_returns_the_revision_list_for_new_repos ()
+it_git_revisions_returns_the_revision_list_for_new_repos ()
 {
 	git_rev_list () {
 		test "$1" = "new-rev"
